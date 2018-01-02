@@ -1,0 +1,2 @@
+# Item-Build-Prescriber-for-Dota-2
+Code written in Phyton which determines optimal character customizations determined by team composition for matches in the video game Dota 2. Tens of thousands of match data scraped from online databases using the Beautiful Soup package and organizaed in a Pandas dataframe. This data is then cleaned and reformatted for compatibility with the Neural Net Solver code.
