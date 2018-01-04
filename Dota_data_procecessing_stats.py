@@ -31,10 +31,10 @@ def summarize(df, name):
     print
 
 
-def determine_player_hero_stats(name,hero_stats,column_title):
+def determine_player_hero_stats(name, hero_stats, column_title):
     return hero_stats.loc[name, column_title] 
 
-def determine_team_primary_attributes(names,hero_stats,column_title):
+def determine_team_primary_attributes(names, hero_stats, column_title):
     if column_title == 'strength': i = 1
     if column_title == 'agility': i = 2
     if column_title == 'intelligence': i = 3
@@ -43,7 +43,7 @@ def determine_team_primary_attributes(names,hero_stats,column_title):
         if hero_stats.loc[name,'primary-ability'] == i: ind = ind + 1 
     return ind
 
-def determine_team_attack_types(names,hero_stats,column_title):
+def determine_team_attack_types(names, hero_stats, column_title):
     if column_title == 'melee': i = 1
     if column_title == 'range': i = 2
     ind = 0
@@ -51,11 +51,60 @@ def determine_team_attack_types(names,hero_stats,column_title):
         if hero_stats.loc[name,'attack-type'] == i: ind = ind + 1 
     return ind
 
-def determine_team_roles(names,hero_stats,column_title):
+def determine_team_roles(names, hero_stats, column_title):
     ind = 0
     for name in names:
          ind = ind + hero_stats.loc[name,column_title] 
     return ind
+
+def determine_player_team_stats(row, hero_stats):
+    """
+    Read in contents of row (all rows at once passed in as a Series)
+    (1) determine the Player Team
+    (2) return the 4 hero names from that team that are not redundant with the player's hero
+        and return the 5 hero names of the other team
+    (3) determine sum stats of each team
+    (4) output these stats in the following order:
+        player team {melee, range, strength, agility, intelligence}, opponent team {...}
+        return tuple of length 10
+    """
+    # define radiant team heroes and dire team heroes
+    radiant_heroes = []
+    dire_heroes = []
+    for i in range(1,6):
+        radiant_heroes.append(row['Radiant Hero ' + str(i)])
+        dire_heroes.append(row['Dire Hero ' + str(i)])
+    # define player team heroes (length 4) and opponent team heroes (length 5)
+    if row["Player Team"] == 'radiant':
+        radiant_heroes.remove(row['Player Hero'])
+        player_team_heroes = radiant_heroes
+        opponent_team_heroes = dire_heroes
+    if row["Player Team"] == 'dire':
+        dire_heroes.remove(row['Player Hero'])
+        player_team_heroes = dire_heroes
+        opponent_team_heroes = radiant_heroes
+    # sum number of each hero type amongst teams using hero_stats
+    for idx, team in enumerate([player_team_heroes, opponent_team_heroes]):
+        melee_count = 0
+        range_count = 0
+        strength_count = 0
+        agility_count = 0
+        intelligence_count = 0
+        role_count = [0]*9
+        for name in team:
+            if hero_stats.loc[name,'attack-type'] == 1: melee_count = melee_count + 1
+            if hero_stats.loc[name,'attack-type'] == 2: range_count = range_count + 1
+            if hero_stats.loc[name,'primary-attribute'] == 1: strength_count = strength_count + 1
+            if hero_stats.loc[name,'primary-attribute'] == 2: agility_count = agility_count + 1
+            if hero_stats.loc[name,'primary-attribute'] == 3: intelligence_count = intelligence_count + 1
+            for role_idx, role in enumerate(roles):
+                role_count[role_idx] = role_count[role_idx] + hero_stats.loc[name,role]
+        team_stats = [melee_count, range_count, strength_count, agility_count, intelligence_count] + role_count
+        if idx == 0: player_team_stats = team_stats
+        if idx == 1: opponent_team_stats = team_stats
+    final_stats = tuple(player_team_stats + opponent_team_stats)
+    return final_stats
+
 
 
 # get lists of common column label groupings
@@ -95,7 +144,7 @@ summarize(df_raw, 'Raw Data')
 
 
 # =========================================================================== #
-# Remove incomplete date
+# Remove incomplete data
 # =========================================================================== #
 
 df_clean = df_raw.copy()
@@ -165,13 +214,15 @@ df_hero_stats = xl.parse("Sheet1")
 
 # roles
 roles = ['carry', 'nuker', 'initiator', 'disabler', 'durable', 'escape', 'support', 'pusher', 'jungler']
-hero_types = ['strength', 'agility', 'intelligence', 'melee', 'range']
+hero_types = ['melee', 'range','strength', 'agility', 'intelligence']
 
 player_columns = ['player-primary-attribute', 'player-attack-type'] + ['player-' + s for s in roles]
 player_team_roles = ['player-team-' + s for s in roles]
 player_team_types = ['player-team-' + s + '-score' for s in hero_types]
 opponent_team_roles = ['opponent-team-' + s for s in roles]
 opponent_team_types = ['opponent-team-' + s + '-score' for s in hero_types]
+team_columns = player_team_types + player_team_roles + opponent_team_types + opponent_team_roles
+
 unique_items = np.unique(df_clean[item_columns].values).tolist()
 skill_options = []
 for i in range(25):
@@ -188,21 +239,27 @@ print 'number of features: ', num_features
 print 'number of classes: ', num_classes
 print
 
-# determine composition for player team
-player-team-hero-columns = ["player-team-hero-1", "player-team-hero-2", "player-team-hero-3", "player-team-hero-4"] 
-opponent-team-hero-columns = ["opponent-team-hero-1", "opponent-team-hero-2", "opponent-team-hero-3", "opponent-team-hero-4", "opponent-team-hero-5"] 
-df_clean[player-team-hero-columns] = df_clean[["Player Hero", "Player Team", "Radiant Hero 1", "Radiant Hero 2", "Radiant Hero 3", "Radiant Hero 4", "Radiant Hero 5", "Dire Hero 1", "Dire Hero 2", "Dire Hero 3", "Dire Hero 4", "Dire Hero 5"]].apply(determine_player_team_heroes)
- 
 # for each row, take Player Team (radiant / dire) and determine the set of 5 columns to work from. Then eliminate the entry redundant with Player Hero. Return the remaining 4 enties. 
 
 
 df_clean["player-primary-attribute"] = df_clean["Player Hero"].apply(determine_player_hero_stats, args = (df_hero_stats,'primary-attribute'))
 df_clean["player-attack-type"] = df_clean["Player Hero"].apply(determine_player_hero_stats, args = (df_hero_stats,'attack-type'))
 for role in roles:
-    df_clean[("player-" + role)] = df_clean["Player Hero"].apply(determine_player_hero_stats, args = (df_hero_stats,('primary-' + role)))
+    df_clean[("player-" + role)] = df_clean["Player Hero"].apply(determine_player_hero_stats, args = (df_hero_stats,(role)))
 
 #for hero_type in hero_types:
-#    df_clean["player-team"] = df_clean[]     determine_team_primary_attributes
+print len(zip(*df_clean.apply(determine_player_team_stats, args = (df_hero_stats,), axis = 1)))
+
+
+df_clean[team_columns[0]], df_clean[team_columns[1]], df_clean[team_columns[2]], df_clean[team_columns[3]], \
+df_clean[team_columns[4]], df_clean[team_columns[5]], df_clean[team_columns[6]], df_clean[team_columns[7]], \
+df_clean[team_columns[8]], df_clean[team_columns[9]], df_clean[team_columns[10]], df_clean[team_columns[11]], \
+df_clean[team_columns[12]], df_clean[team_columns[13]], \
+df_clean[team_columns[14]], df_clean[team_columns[15]], df_clean[team_columns[16]], df_clean[team_columns[17]], \
+df_clean[team_columns[18]], df_clean[team_columns[19]], df_clean[team_columns[20]], df_clean[team_columns[21]], \
+df_clean[team_columns[22]], df_clean[team_columns[23]], df_clean[team_columns[24]], df_clean[team_columns[25]], \
+df_clean[team_columns[26]], df_clean[team_columns[27]] = zip(*df_clean.apply(determine_player_team_stats, args = (df_hero_stats,), axis = 1))
+
 
 
 
@@ -213,18 +270,13 @@ df_matches_s = df_clean.loc[:, ["player-primary-attribute"]]
 
 
 writer = pd.ExcelWriter('Dota_stats_test.xlsx')
-df_matches_s.to_excel(writer,'Sheet1')
+df_clean.to_excel(writer,'Sheet1')
 writer.save()
 
 sys.exit()
 
 
 
-
-
-for index, row in df_clean.iterrows():
-    print index
-    new_row = [0] * len(new_column_headers)
 
 
 
