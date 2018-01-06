@@ -101,8 +101,12 @@ df_clean = df_clean.drop(df_items[df_items.apply(pd.Series.nunique, axis = 1) <=
 summarize(df_clean, 'Cleaned Data')
 
 
+
+
+# =========================================================================== #
 # =========================================================================== #
 # Translate Data into Binary Table
+# =========================================================================== #
 # =========================================================================== #
 
 # COLUMNS: 
@@ -114,7 +118,10 @@ summarize(df_clean, 'Cleaned Data')
 #     level-{}-skill-{}: 1 for player chose this skill at this level
 
 
-# Get new column headers
+# =========================================================================== #
+# # Get new column headers
+# =========================================================================== #
+
 unique_player_hero = np.unique(df_clean['Player Hero'].values).tolist()
 unique_player_hero = ['player-' + s for s in unique_player_hero]
 unique_radiant = np.unique(df_clean[radiant_columns].values).tolist()
@@ -136,6 +143,10 @@ print 'number of features: ', num_features
 print 'number of classes: ', num_classes
 print
 
+
+# =========================================================================== #
+# Reformat data into new table
+# =========================================================================== #
 
 # initialize binary dataframe
 df_matches_b = pd.DataFrame(columns = new_column_headers)
@@ -180,11 +191,6 @@ for index, row in df_clean.iterrows():
 df_matches_b.to_excel(writer,'Sheet1')
 writer.save()
 
-writer2 = pd.ExcelWriter('count.xlsx')
-print df.sum(axis=1)
-df_count = df.sum(axis=1)
-df_count.to_excel(writer2,'Sheet1')
-writer2.save()
 
 
 
@@ -218,10 +224,15 @@ for i in range(len(df_matches_b.index)):
     y_out.write('\n')
 
 
+# =========================================================================== #
+# Try summing up item usage report
+# =========================================================================== #
 
-
-
-
+writer2 = pd.ExcelWriter('count.xlsx')
+print df_matches_b.sum(axis=1)
+df_count = df_matches_b.sum(axis=1)
+df_count.to_excel(writer2,'Sheet1')
+writer2.save()
 
 
 
