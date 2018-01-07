@@ -80,6 +80,29 @@ def determine_heroes_binary(row, hero_names):
     return final_hero_options
 
 
+def determine_items_skills_binary(row, items_list):
+    item_columns = []
+    skill_columns = []
+    for i in range(1, 6): 
+        item_columns.append('Player Item ' + str(i))
+    for i in range(1, 26):
+        skill_columns.append('Skill Level ' + str(i))
+
+    item_options = [0] * len(items_list)
+    for idx, item in enumerate(items_list):
+        if item in row[item_columns].values: item_options[idx] = 1
+
+    ind = 0
+    skill_options = [0] * 25 * 4
+    for level in range(25):
+        column_header = 'Skill Level ' + str(level+1)
+        for skill in range(1,5):
+            if row[column_header] == skill: skill_options[ind] = 1
+            ind = ind + 1
+    final_item_skill_options = tuple(item_options + skill_options)
+    return final_item_skill_options
+
+
 # =========================================================================== #
 # =========================================================================== #
 
@@ -189,17 +212,20 @@ summarize(df_clean, 'Cleaned Data')
 # =========================================================================== #
 
 unique_items = np.unique(df_clean[item_columns].values).tolist()
+items_headers = ['item-' + s for s in unique_items]
 skill_options = []
 for i in range(25):
     for j in range(4):
         column_header = 'level-' + str(i+1) + '-skill-' + str(j+1)
         skill_options.append(column_header) 
+skill_options = []
 
 hero_name_headers = ['player-' + s for s in hero_names] + ['player-team-' + s for s in hero_names] + ['opponent-team-' + s for s in hero_names]
-new_column_headers = hero_name_headers + unique_items + skill_options
+item_skills_headers = items_headers + skill_options
+new_column_headers = hero_name_headers + item_skills_headers
 
-num_features = len(hero_names) * 3
-num_classes = len(unique_items + skill_options)
+num_features = len(hero_name_headers)
+num_classes = len(item_skills_headers)
 print 'number of features: ', num_features
 print 'number of classes: ', num_classes
 print
@@ -211,68 +237,19 @@ print
 # Reformat data into new table
 # =========================================================================== #
 
-new_columns_tuple_series = zip(*df_clean.apply(determine_heroes_binary, args = (hero_names,), axis = 1))
+new_hero_names_tup_series = zip(*df_clean.apply(determine_heroes_binary, args = (hero_names,), axis = 1))
 for idx, header in enumerate(hero_name_headers):
-    df_clean[header] = new_columns_tuple_series[idx]
+    df_clean[header] = new_hero_names_tup_series[idx]
 
-#df_matches_b = df_clean.loc[:, ["player-primary-attribute"]]
+new_items_skills_tup_series = zip(*df_clean.apply(determine_items_skills_binary, args = (unique_items,), axis = 1))
+for idx, header in enumerate(item_skills_headers):
+    df_clean[header] = new_items_skills_tup_series[idx]
 
-# update excel spreadsheet file
-df_clean.to_excel(writer,'Sheet1')
-writer.save()
-
-sys.exit()
-
-
-
-
-# =========================================================================== #
-# Reformat data into new table
-# =========================================================================== #
-
-# initialize binary dataframe
-df_matches_b = pd.DataFrame(columns = new_column_headers)
-
-# Form new rows using Binary indicators 
-for index, row in df_clean.iterrows():
-    print index
-    new_row = [0] * len(new_column_headers)
-
-    if row['Player Team'] == 'radiant': new_row[0] = 1
-
-    ind = 0
-    for hero in unique_player_hero:
-        ind = ind + 1
-        if hero == ('player-' + row['Player Hero']): new_row[ind] = 1
-
-    for hero in unique_radiant:
-        ind = ind + 1
-        if hero in ['radiant-' + s for s in row[radiant_columns].values]: new_row[ind] = 1
-
-    for hero in unique_dire:
-        ind = ind + 1
-        if hero in ['dire-' + s for s in row[dire_columns].values]: new_row[ind] = 1
-
-    for item in unique_items:
-        ind = ind + 1
-        if item in row[item_columns].values: new_row[ind] = 1
-
-    for level in range(25):
-        column_header = 'Skill Level ' + str(level+1)
-        for skill in range(4):
-            ind = ind + 1
-            if (skill + 1) == row[column_header]: new_row[ind] = 1
-        
-    df_match_b = pd.DataFrame([new_row], columns = new_column_headers)
-
-    # append new row to new binary dataframe
-    df_matches_b = df_matches_b.append(df_match_b, ignore_index = True)
-
+df_matches_b = df_clean.loc[:, new_column_headers]
 
 # update excel spreadsheet file
 df_matches_b.to_excel(writer,'Sheet1')
 writer.save()
-
 
 
 
@@ -310,11 +287,9 @@ for i in range(len(df_matches_b.index)):
 # Try summing up item usage report
 # =========================================================================== #
 
-writer2 = pd.ExcelWriter('count.xlsx')
-print df_matches_b.sum(axis=1)
-df_count = df_matches_b.sum(axis=1)
-df_count.to_excel(writer2,'Sheet1')
-writer2.save()
+item_counts_dict = dict(zip(unique_items, df_matches_b[items_headers].sum(axis=0).tolist()))
+for key, value in sorted(item_counts_dict.iteritems(), key=lambda (k,v): (v,k)):
+    print "%s: %s" % (key, value)
 
 
 

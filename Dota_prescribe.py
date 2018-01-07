@@ -46,13 +46,10 @@ column_titles = library.split()
  
 #print column_titles
 
-player_hero_names = [ title[7:] for title in column_titles if title[:7] == 'player-' and title != 'player-team']
-radiant_hero_names = [ title[8:] for title in column_titles if title[:8] == 'radiant-']
-dire_hero_names = [ title[5:] for title in column_titles if title[:5] == 'dire-']
+hero_names = [ title[7:] for title in column_titles if title[:7] == 'player-']
+item_names = [ title[5:] for title in column_titles if title[:5] == 'item-']
 
-item_names = [ title for title in column_titles if title[:7] != 'player-' and title[:8] != 'radiant-' and title[:5] != 'dire-' and title[:6] != 'level-']
-
-print len(player_hero_names), ' player heroes'
+print len(hero_names), ' heroes'
 print len(item_names), ' items'
 
 
@@ -60,45 +57,47 @@ print len(item_names), ' items'
 # Read hero names from user
 # =========================================================================== #
 
-radiant_heroes = []
-for i in range(1,6):
+name = str()
+while name not in hero_names:
+    text = raw_input("input your hero \n")
+    name = clean_string(text)
+    if name not in hero_names: 
+        print "Name not in library of hero names. Please try again. \n"  
+player_hero = name
+
+print "=== Player hero assigned === \n \n"
+
+player_team_heroes = []
+for i in range(1,5):
     name = str()
-    while name not in radiant_hero_names or name in radiant_heroes:
-        text = raw_input("input radiant hero " + str(i) + " (include yourself)\n")
+    while name not in hero_names or name in radiant_heroes or name == player_hero:
+        text = raw_input("input hero on your team " + str(i) + "/4 (do not include yourself)\n")
         name = clean_string(text)
         if name not in radiant_hero_names: 
             print "Name not in library of hero names. Please try again. \n" 
         if name in radiant_heroes: 
             print "This hero has already been entered. Please try again. \n" 
+        if name == player_hero:
+            print "Do not include yourself"
         print
-    radiant_heroes.append(name)
+    player_team_heroes.append(name)
 
-print "=== Radiant team assigned === \n \n"
+print "=== Player team assigned === \n \n"
 
-dire_heroes = []
+opponent_team_heroes = []
 for i in range(1,6):
     name = str()
-    while name not in dire_hero_names or name in dire_heroes:
-        text = raw_input("input dire hero " + str(i) + " (include yourself)\n")
+    while name not in hero_names or name in radiant_heroes or name in dire_heroes:
+        text = raw_input("input hero on opposite team " + str(i) + "/5\n")
         name = clean_string(text)
         if name not in dire_hero_names: 
             print "Name not in library of hero names. Please try again. \n" 
-        if name in dire_heroes: 
+        if name in dire_heroes or name in radiant_heroes: 
             print "This hero has already been entered. Please try again. \n" 
         print
-    dire_heroes.append(name)
+    opponent_team_heroes.append(name)
 
-print "=== Dire team assigned === \n \n"
-
-name = str()
-while name not in player_hero_names or name not in (radiant_heroes + dire_heroes):
-    text = raw_input("input your hero \n")
-    name = clean_string(text)
-    if name not in player_hero_names: 
-        print "Name not in library of hero names. Please try again. \n" 
-    if name not in (radiant_heroes + dire_heroes): 
-        print "This hero is not being used by either team. Please try again. \n" 
-player_hero = name
+print "=== Opposing team assigned === \n \n"
 
 print
 print "All heroes entered. \n Prescribing items... \n" 
@@ -108,22 +107,19 @@ print "All heroes entered. \n Prescribing items... \n"
 # Create vector for feeding forward
 # =========================================================================== #
 
-input_list = [0] * (len(player_hero_names) + len(radiant_hero_names) + len(dire_hero_names) + 1)
+input_list = [0] * len(hero_names) *3 
 
-if player_hero in radiant_heroes:
-    input_list[0] = 1
-
-for idx, name in enumerate(player_hero_names):
+for idx, name in enumerate(hero_names):
     if name == player_hero:
-        input_list[idx + 1] = 1
+        input_list[idx] = 1
 
-for idx, name in enumerate(radiant_hero_names):
-    if name in radiant_heroes:
-        input_list[idx + 1 + len(player_hero_names)] = 1
+for idx, name in enumerate(hero_names):
+    if name in player_team_heroes:
+        input_list[idx + len(hero_names)] = 1
 
-for idx, name in enumerate(dire_hero_names):
-    if name in dire_heroes:
-        input_list[idx + 1 + len(player_hero_names + radiant_hero_names)] = 1
+for idx, name in enumerate(hero_names):
+    if name in opponent_team_heroes:
+        input_list[idx + len(hero_names) * 2] = 1
 
 input_X = np.matrix([input_list])
 
