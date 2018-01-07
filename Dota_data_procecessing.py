@@ -31,6 +31,58 @@ def summarize(df, name):
     print
 
 
+def clean_string(string):
+    string = string.lower()
+    string = string.replace(" ", "-")
+    string = string.replace("'", "")
+    return string
+
+
+def determine_heroes_binary(row, hero_names):
+    """
+    Read in contents of row (all rows at once passed in as a Series)
+    (1) determine the Player Team
+    (2) determine the 4 hero names from that team that are not redundant with the player's hero
+        and return the 5 hero names of the other team
+    (3) return the tuple of binary information regarding the player hero, player's team's heroes 
+        and opponent team's heroes
+    """
+    # define radiant team heroes and dire team heroes
+    radiant_heroes = []
+    dire_heroes = []
+    for i in range(1,6):
+        radiant_heroes.append(row['Radiant Hero ' + str(i)])
+        dire_heroes.append(row['Dire Hero ' + str(i)])
+    # define player team heroes (length 4) and opponent team heroes (length 5)
+    if row["Player Team"] == 'radiant':
+        radiant_heroes.remove(row['Player Hero'])
+        player_team_heroes = radiant_heroes
+        opponent_team_heroes = dire_heroes
+    if row["Player Team"] == 'dire':
+        dire_heroes.remove(row['Player Hero'])
+        player_team_heroes = dire_heroes
+        opponent_team_heroes = radiant_heroes
+
+    player_hero_options = [0] * len(hero_names)
+    for idx, name in enumerate(hero_names):
+        if name == row['Player Hero']:
+            player_hero_options[idx] = 1 
+    player_team_options = [0] * len(hero_names)
+    for idx, name in enumerate(hero_names):
+        if name in player_team_heroes:
+            player_team_options[idx] = 1
+    opponent_team_options = [0] * len(hero_names)
+    for idx, name in enumerate(hero_names):
+        if name in opponent_team_heroes:
+            opponent_team_options[idx] = 1 
+    final_hero_options = tuple(player_hero_options + player_team_options + opponent_team_options)
+
+    return final_hero_options
+
+
+# =========================================================================== #
+# =========================================================================== #
+
 
 # get lists of common column label groupings
 radiant_columns = []
@@ -68,6 +120,9 @@ df_raw['Match Duration sec'] = seconds
 # print facts about data set
 summarize(df_raw, 'Raw Data')
 
+hero_names = ['Abaddon', 'Alchemist', 'Ancient Apparition', 'Anti-Mage', 'Arc Warden', 'Axe', 'Bane', 'Batrider', 'Beastmaster', 'Bloodseeker', 'Bounty Hunter', 'Brewmaster', 'Bristleback', 'Broodmother', 'Centaur Warrunner', 'Chaos Knight', 'Chen', 'Clinkz', 'Clockwerk', 'Crystal Maiden', 'Dark Seer', 'Dark Willow', 'Dazzle', 'Death Prophet', 'Disruptor', 'Doom', 'Dragon Knight', 'Drow Ranger', 'Earth Spirit', 'Earthshaker', 'Elder Titan', 'Ember Spirit', 'Enchantress', 'Enigma', 'Faceless Void', 'Gyrocopter', 'Huskar', 'Invoker', 'Io', 'Jakiro', 'Juggernaut', 'Keeper of the Light', 'Kunkka', 'Legion Commander', 'Leshrac', 'Lich', 'Lifestealer', 'Lina', 'Lion', 'Lone Druid', 'Luna', 'Lycan', 'Magnus', 'Medusa', 'Meepo', 'Mirana', 'Monkey King', 'Morphling', 'Naga Siren', 'Nature\'s Prophet', 'Necrophos', 'Night Stalker', 'Nyx Assassin', 'Ogre Magi', 'Omniknight', 'Oracle', 'Outworld Devourer', 'Pangolier', 'Phantom Assassin', 'Phantom Lancer', 'Phoenix', 'Puck', 'Pudge', 'Pugna', 'Queen of Pain', 'Razor', 'Riki', 'Rubick', 'Sand King', 'Shadow Demon', 'Shadow Fiend', 'Shadow Shaman', 'Silencer', 'Skywrath Mage', 'Slardar', 'Slark', 'Sniper', 'Spectre', 'Spirit Breaker', 'Storm Spirit', 'Sven', 'Techies', 'Templar Assassin', 'Terrorblade', 'Tidehunter', 'Timbersaw', 'Tinker', 'Tiny', 'Treant Protector', 'Troll Warlord', 'Tusk', 'Underlord', 'Undying', 'Ursa', 'Vengeful Spirit', 'Venomancer', 'Viper', 'Visage', 'Warlock', 'Weaver', 'Windranger', 'Winter Wyvern', 'Witch Doctor', 'Wraith King', 'Zeus']
+
+hero_names = [clean_string(name) for name in hero_names]
 
 # =========================================================================== #
 # Remove incomplete date
@@ -118,16 +173,21 @@ summarize(df_clean, 'Cleaned Data')
 #     level-{}-skill-{}: 1 for player chose this skill at this level
 
 
+# COLUMNS: 
+#     player-{hero}:        1 for player was this hero
+#     player-team-{hero}:   1 for radiant team used this hero
+#     opponent-team-{hero}: 1 for dire team used this hero
+#     {item}:               1 for player finished with this item
+#     level-{}-skill-{}:    1 for player chose this skill at this level
+
+
+
+
+
 # =========================================================================== #
 # # Get new column headers
 # =========================================================================== #
 
-unique_player_hero = np.unique(df_clean['Player Hero'].values).tolist()
-unique_player_hero = ['player-' + s for s in unique_player_hero]
-unique_radiant = np.unique(df_clean[radiant_columns].values).tolist()
-unique_radiant = ['radiant-' + s for s in unique_radiant]
-unique_dire = np.unique(df_clean[dire_columns].values).tolist()
-unique_dire = ['dire-' + s for s in unique_dire]
 unique_items = np.unique(df_clean[item_columns].values).tolist()
 skill_options = []
 for i in range(25):
@@ -135,13 +195,35 @@ for i in range(25):
         column_header = 'level-' + str(i+1) + '-skill-' + str(j+1)
         skill_options.append(column_header) 
 
-new_column_headers = ['player-team'] + unique_player_hero + unique_radiant + unique_dire + unique_items + skill_options
+hero_name_headers = ['player-' + s for s in hero_names] + ['player-team-' + s for s in hero_names] + ['opponent-team-' + s for s in hero_names]
+new_column_headers = hero_name_headers + unique_items + skill_options
 
-num_features = 1 + len(unique_player_hero + unique_radiant + unique_dire)
+num_features = len(hero_names) * 3
 num_classes = len(unique_items + skill_options)
 print 'number of features: ', num_features
 print 'number of classes: ', num_classes
 print
+
+
+
+
+# =========================================================================== #
+# Reformat data into new table
+# =========================================================================== #
+
+new_columns_tuple_series = zip(*df_clean.apply(determine_heroes_binary, args = (hero_names,), axis = 1))
+for idx, header in enumerate(hero_name_headers):
+    df_clean[header] = new_columns_tuple_series[idx]
+
+#df_matches_b = df_clean.loc[:, ["player-primary-attribute"]]
+
+# update excel spreadsheet file
+df_clean.to_excel(writer,'Sheet1')
+writer.save()
+
+sys.exit()
+
+
 
 
 # =========================================================================== #
