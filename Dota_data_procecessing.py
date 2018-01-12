@@ -191,8 +191,8 @@ if len(sys.argv) != 2:
 run_type = int(sys.argv[1])
 use_binary = False
 use_stats = False
-if run_type == 1: use_binary = True
-if run_type == 2: use_stats = True
+if run_type == 1: use_stats = True
+if run_type == 2: use_binary = True
 
 
 # get lists of common column label groupings
@@ -209,8 +209,8 @@ for i in range(25):
 
 
 # initialize excel spreadsheet for binary data
-writer = pd.ExcelWriter('Dota_binary_data.xlsx')
-#writer = pd.ExcelWriter('output2.xlsx')
+if use_binary: writer = pd.ExcelWriter('Dota_binary_data.xlsx')
+if use_stats: writer = pd.ExcelWriter('Dota_stats_data.xlsx')
 
 
 # =========================================================================== #
@@ -294,6 +294,7 @@ if use_stats:
 #     {item}:                          : 1 for player finished with this item
 #     level-{}-skill-{}                : 1 for player chose this skill at this level
 
+    print "=== using stats format ==="
 
     # read in hero stats spreadsheet
     xl = pd.ExcelFile("Dota_hero_stats.xlsx")
@@ -343,8 +344,12 @@ if use_stats:
         df_clean[("player-" + role)] = df_clean["Player Hero"].apply(determine_player_hero_stats, args = (df_hero_stats,(role)))
 
     new_team_columns_tup_series = zip(*df_clean.apply(determine_player_team_stats, args = (df_hero_stats,), axis = 1))
-    for idx, header in enumerate(new_team_columns_tup_series):
+    for idx, header in enumerate(team_columns):
         df_clean[header] = new_team_columns_tup_series[idx]
+
+    new_items_skills_tup_series = zip(*df_clean.apply(determine_items_skills_binary, args = (unique_items,), axis = 1))
+    for idx, header in enumerate(item_skills_headers):
+        df_clean[header] = new_items_skills_tup_series[idx]
 
     df_matches_s = df_clean.loc[:, new_column_headers]
 
@@ -372,6 +377,8 @@ if use_binary:
 # =========================================================================== #
 # # Get new column headers
 # =========================================================================== #
+
+    print "=== using binary format ==="
 
     unique_items = np.unique(df_clean[item_columns].values).tolist()
     items_headers = ['item-' + s for s in unique_items]
@@ -451,15 +458,18 @@ for i in range(len(df_format.index)):
 
 
 # =========================================================================== #
-# Try summing up item usage report
+# Sum up item usage report
 # =========================================================================== #
 
 if use_binary: df_format = df_matches_b
 if use_stats: df_format = df_matches_s
 
+item_use_fname = 'item_usage.dat'
+item_use_file = open(item_use_fname, 'w')
+
 item_counts_dict = dict(zip(unique_items, df_format[items_headers].sum(axis=0).tolist()))
 for key, value in sorted(item_counts_dict.iteritems(), key=lambda (k,v): (v,k)):
-    print "%s: %s" % (key, value)
+    item_use_file.write("%s: %s \n" % (key, value))
 
 
 

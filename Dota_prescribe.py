@@ -9,7 +9,7 @@ import sys
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import neuralnet as ann
+from neuralnet import MLPClassifier
 
 
 
@@ -26,18 +26,22 @@ def clean_string(string):
 # Determinine list of names
 # =========================================================================== #
 
-## read in raw data spreadsheet
-#xl = pd.ExcelFile("Dota_binary_data.xlsx")
-#df_matches = xl.parse("Sheet1")
+first_time = False
 
-#column_titles = list(df_matches.columns.values)
+if first_time:
+    # read in raw data spreadsheet
+    xl = pd.ExcelFile("Dota_binary_data.xlsx")
+    df_matches = xl.parse("Sheet1")
 
-#file_name = 'name_library.dat'
-#f = open(file_name, 'w')
-#for title in column_titles:
-#    f.write(title + ' ')
+    column_titles = list(df_matches.columns.values)
 
-#sys.exit()
+    file_name = 'name_library.dat'
+    f = open(file_name, 'w')
+    for title in column_titles:
+        f.write(title + ' ')
+
+    print 'column names written to name_library.dat. can use this file from now on'
+    sys.exit()
 
 file_name = 'name_library.dat'
 f = open(file_name, 'rU')
@@ -46,7 +50,7 @@ column_titles = library.split()
  
 #print column_titles
 
-hero_names = [ title[7:] for title in column_titles if title[:7] == 'player-']
+hero_names = [ title[12:] for title in column_titles if title[:12] == 'player-team-']
 item_names = [ title[5:] for title in column_titles if title[:5] == 'item-']
 
 print len(hero_names), ' heroes'
@@ -70,12 +74,12 @@ print "=== Player hero assigned === \n \n"
 player_team_heroes = []
 for i in range(1,5):
     name = str()
-    while name not in hero_names or name in radiant_heroes or name == player_hero:
+    while name not in hero_names or name in player_team_heroes or name == player_hero:
         text = raw_input("input hero on your team " + str(i) + "/4 (do not include yourself)\n")
         name = clean_string(text)
-        if name not in radiant_hero_names: 
+        if name not in hero_names: 
             print "Name not in library of hero names. Please try again. \n" 
-        if name in radiant_heroes: 
+        if name in player_team_heroes: 
             print "This hero has already been entered. Please try again. \n" 
         if name == player_hero:
             print "Do not include yourself"
@@ -87,12 +91,12 @@ print "=== Player team assigned === \n \n"
 opponent_team_heroes = []
 for i in range(1,6):
     name = str()
-    while name not in hero_names or name in radiant_heroes or name in dire_heroes:
+    while name not in hero_names or name in opponent_team_heroes or name in player_team_heroes or name == player_hero:
         text = raw_input("input hero on opposite team " + str(i) + "/5\n")
         name = clean_string(text)
-        if name not in dire_hero_names: 
+        if name not in hero_names: 
             print "Name not in library of hero names. Please try again. \n" 
-        if name in dire_heroes or name in radiant_heroes: 
+        if name in opponent_team_heroes or name in player_team_heroes: 
             print "This hero has already been entered. Please try again. \n" 
         print
     opponent_team_heroes.append(name)
@@ -129,12 +133,12 @@ input_X = np.matrix([input_list])
 # Feed forward in neural net
 # =========================================================================== #
 
-Y_dimension = len(item_names) + 25 * 4
-arch = ([input_X.shape[1]] + ann.import_architecture('arch.dat') + [Y_dimension])
-Theta_matrices = ann.import_weights(arch, 2)
-prediction = ann.make_prediction(Theta_matrices, input_X)[0]
-print prediction
-print len(prediction)
+skill_columns = 0 # 100 if using skills
+Y_dimension = len(item_names) + skill_columns
+clf = MLPClassifier(lambda_reg=(10.0**0.5), hidden_layer_sizes=(250,), tol=0.005, cg_solver='fmin_cg')
+
+clf.read_weights(input_X.shape[1], Y_dimension)
+prediction = clf.predict(input_X)
 
 
 # =========================================================================== #
@@ -152,11 +156,12 @@ print
 # =========================================================================== #
 
 ind = len(item_names)
-for level in range(25):
-    for skill in range(4):
-        if prediction[ind] == 1:
-            print "level " + str(level + 1) + ": skill " + str(skill + 1) 
-        ind = ind + 1
+if skill_columns > 0:
+    for level in range(25):
+        for skill in range(4):
+            if prediction[ind] == 1:
+                print "level " + str(level + 1) + ": skill " + str(skill + 1) 
+            ind = ind + 1
 
 
 
