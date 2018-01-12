@@ -4,6 +4,7 @@ import sys
 import numpy as np
 from neuralnet import MLPClassifier
 from Tkinter import *
+#from PIL import ImageTk, Image # FOR WINDOWS
 
 
 def Button1():
@@ -132,7 +133,8 @@ if __name__ == '__main__':
   for idx, hero in enumerate(hero_list):
       action = lambda x = hero: assign_hero(x)
       hero_buttons.append(Button(root, text=clean_string(hero), command = action))
-      hero_photos.append(PhotoImage(file="./images/" + clean_string_for_shell(hero) + "_sb.png"))
+      hero_photos.append(PhotoImage(file="./images/" + clean_string_for_shell(hero) + "_sb.png"))  # FOR LINUX
+#      hero_photos.append(ImageTk.PhotoImage(Image.open("./images/" + clean_string_for_shell(hero) + "_sb.png")))  # FOR WINDOWS
       hero_buttons[-1].config(image=hero_photos[-1],width="59",height="33",activebackground="black",bg="black", bd=0)
       # locations in grid
       if hero in strength_radiant_heroes:
