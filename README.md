@@ -2,7 +2,7 @@
 Code written in Phyton which determines optimal character customizations determined by team composition for matches in the video game Dota 2. Tens of thousands of match data scraped from online databases using the Beautiful Soup package and organizaed in a Pandas dataframe. This data is then cleaned and reformatted for compatibility with the custom built neuralnet package.
 
 For the primary use as item prescriber:
-Running the file Dota_item_prescriber_gui.py (Dota_item_prescriber_gui_win.py for Windows) brings up a GUI built with the Tkinter package. Users select the ten heroes in the match of interest and then choose the "Get Items" button in order to print prescribed items. Can run Dota_item_prescriber.py for terminal entry of heros and output. Note: For Windows, must have anaconda installed, or some other means of executing python scripts. Can double click Dota_item_prescriber_windows.bat to run from File Explorer. 
+Running the file Dota_item_prescriber_gui.py brings up a GUI built with the Tkinter package. Users select the ten heroes in the match of interest and then choose the "Get Items" button in order to print prescribed items. Can run Dota_item_prescriber.py for terminal entry of heros and output. Note: For Windows, must have anaconda installed, or some other means of executing python scripts. Can double click Dota_item_prescriber_windows.bat to run from File Explorer. 
 
 Must be included in the present working directory: 
 item_list.txt: a list of all items (in alphabetical order) which may be potential outputs. 
