@@ -232,8 +232,8 @@ df_raw['Match Duration sec'] = seconds
 summarize(df_raw, 'Raw Data')
 
 hero_names = ['Abaddon', 'Alchemist', 'Ancient Apparition', 'Anti-Mage', 'Arc Warden', 'Axe', 'Bane', 'Batrider', 'Beastmaster', 'Bloodseeker', 'Bounty Hunter', 'Brewmaster', 'Bristleback', 'Broodmother', 'Centaur Warrunner', 'Chaos Knight', 'Chen', 'Clinkz', 'Clockwerk', 'Crystal Maiden', 'Dark Seer', 'Dark Willow', 'Dazzle', 'Death Prophet', 'Disruptor', 'Doom', 'Dragon Knight', 'Drow Ranger', 'Earth Spirit', 'Earthshaker', 'Elder Titan', 'Ember Spirit', 'Enchantress', 'Enigma', 'Faceless Void', 'Gyrocopter', 'Huskar', 'Invoker', 'Io', 'Jakiro', 'Juggernaut', 'Keeper of the Light', 'Kunkka', 'Legion Commander', 'Leshrac', 'Lich', 'Lifestealer', 'Lina', 'Lion', 'Lone Druid', 'Luna', 'Lycan', 'Magnus', 'Medusa', 'Meepo', 'Mirana', 'Monkey King', 'Morphling', 'Naga Siren', 'Nature\'s Prophet', 'Necrophos', 'Night Stalker', 'Nyx Assassin', 'Ogre Magi', 'Omniknight', 'Oracle', 'Outworld Devourer', 'Pangolier', 'Phantom Assassin', 'Phantom Lancer', 'Phoenix', 'Puck', 'Pudge', 'Pugna', 'Queen of Pain', 'Razor', 'Riki', 'Rubick', 'Sand King', 'Shadow Demon', 'Shadow Fiend', 'Shadow Shaman', 'Silencer', 'Skywrath Mage', 'Slardar', 'Slark', 'Sniper', 'Spectre', 'Spirit Breaker', 'Storm Spirit', 'Sven', 'Techies', 'Templar Assassin', 'Terrorblade', 'Tidehunter', 'Timbersaw', 'Tinker', 'Tiny', 'Treant Protector', 'Troll Warlord', 'Tusk', 'Underlord', 'Undying', 'Ursa', 'Vengeful Spirit', 'Venomancer', 'Viper', 'Visage', 'Warlock', 'Weaver', 'Windranger', 'Winter Wyvern', 'Witch Doctor', 'Wraith King', 'Zeus']
-
 hero_names = [clean_string(name) for name in hero_names]
+consumables = ['clarity', 'town-portal-scroll', 'faerie-fire', 'observer-and-sentry-wards',  'observer-ward', 'smoke-of-deceit', 'enchanted-mango', 'sentry-ward', 'healing-salve', 'tango', 'tome-of-knowledge', 'dust-of-appearance', 'bottle']
 
 # =========================================================================== #
 # Remove incomplete date
@@ -314,7 +314,7 @@ if use_stats:
     opponent_team_roles = ['opponent-team-' + s for s in roles]
 
     unique_items = np.unique(df_clean[item_columns].values).tolist()
-    items_headers = ['item-' + s for s in unique_items]
+    items_headers = ['item-' + s for s in unique_items if not in consumables]
     skill_options = []
     for i in range(25):
         for j in range(4):
@@ -381,7 +381,7 @@ if use_binary:
     print "=== using binary format ==="
 
     unique_items = np.unique(df_clean[item_columns].values).tolist()
-    items_headers = ['item-' + s for s in unique_items]
+    items_headers = ['item-' + s for s in unique_items if not in consumables]
     skill_options = []
     for i in range(25):
         for j in range(4):
@@ -419,8 +419,9 @@ if use_binary:
     writer.save()
 
 
-
-
+open(items_fname, 'w')
+for item in items_headers:
+    x_out.write(item + " ")
 
 
 

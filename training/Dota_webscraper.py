@@ -192,6 +192,13 @@ for i in range(1,num_player_pages+1):
         ind = ind + 1
         player_indices.append(tuple[1])
         player_names_dict[tuple[1]] = player_names[ind]
+        
+
+player_list_fname = 'player_list.dat'
+player_list_file = open(player_list_fname, 'w')
+for player_index in player_indices:
+    player_list_file.write(player_names_dict[player_index] "\n")
+player_list_file.close()
 
 print
 
