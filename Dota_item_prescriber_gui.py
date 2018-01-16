@@ -49,7 +49,7 @@ class MyFirstGUI:
 #        background.paste(logo_image, (int(w/1.77), h/4), logo_image)
         background_image = ImageTk.PhotoImage(background)
 
-        master.geometry('%dx%d+0+0' % (w,h))
+        master.geometry('%dx%d+0+0' % (int(w*0.75),h))
         bg_label = Label(master, image=background_image)
         bg_label.image = background_image
         bg_label.place(x=0, y=0, relwidth=1, relheight=1)
