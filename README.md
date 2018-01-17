@@ -1,12 +1,13 @@
 # Item-Build-Prescriber-for-Dota-2
 Code written in Phyton which determines optimal character customizations determined by team composition for matches in the video game Dota 2. Tens of thousands of match data scraped from online databases using the Beautiful Soup package and organizaed in a Pandas dataframe. This data is then cleaned and reformatted for use with a Multilayer perceptron classifier (multi-label). This training can be done using MLPClassider from the scikit-learn package or the custom built neural net package (https://github.com/kidddw/Neural-Net-Python). Currently, the configuration uses the former method and a hidden layer architecture of (300,250,200).
 
-For the primary use as item prescriber:
+For the primary use as an item prescriber:
 Running the file Dota_item_prescriber_gui.py brings up a GUI built with the Tkinter package. Users select the ten heroes in the match of interest and then choose the "Get Items" button in order to print prescribed items. Can run Dota_item_prescriber.py for terminal entry of heros and output. Note: For Windows, must have anaconda installed, or some other means of executing python scripts. Can double click Dota_item_prescriber_windows.bat to run from File Explorer. 
 
 Must be included in the present working directory: 
 item_list.txt: a list of all items (in alphabetical order) which may be potential outputs. 
-weights.dat: trained weights which describe the mapping from input hero configuration to output item list
+weights.dat: trained weights which describe the mapping from input hero configuration to output item list (for neural net package)
+finalalized_model: trained weights which describe the mapping from input hero configuration to output item list (scikit-learn)
 
 
 
