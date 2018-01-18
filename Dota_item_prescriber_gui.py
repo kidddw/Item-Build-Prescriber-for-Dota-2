@@ -168,7 +168,7 @@ class MyFirstGUI:
 
 
     def keep_flat(self, event):       # on click,
-        if event.widget in self.hero_buttons: # if the click came from a hero button
+        if event.widget in self.hero_buttons and self.player_count <= 9: # if the click came from a hero button
             event.widget.config(relief=FLAT, highlightbackground='red') # enforce an option
 
 
